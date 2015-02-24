@@ -13,7 +13,6 @@ var util = require('util');
 var opensubtitles = require('opensubtitles-client');
 var nconf = require('nconf');
 
-var lib = require('./lib/lib-test');
 var deviceRegister = require('./lib/device-register');
 var winston = require('./lib/logger');
 
@@ -27,8 +26,6 @@ var app = express();
 var port = 3000;
 
 var router = express.Router();
-
-winston.log('info', lib.mylib('toto'));
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
