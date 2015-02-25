@@ -9,16 +9,12 @@ var irc = require('xdcc').irc;
 var zlib = require('zlib');
 var fs = require('fs');
 var util = require('util');
-//var winston = require('winston');
 var opensubtitles = require('opensubtitles-client');
-var nconf = require('nconf');
 
-var deviceRegister = require('./lib/device-register');
+var nconf = require('./lib/conf');
+var deviceRegister = require('./lib/register-service');
 var winston = require('./lib/logger');
 
-nconf.argv().env().file({ file: 'config/config.json' });
-
-var dbRegId = new Datastore({ filename: 'data/regId.db', autoload: true });
 
 var gcmSender = new gcm.Sender(nconf.get('gcm-key'));
 
@@ -31,28 +27,19 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 router.get('/', function(req, res) {
-    res.send('api home page');  
+  res.send('api home page');  
 });
 
 router.get('/register', function(req, res) {
-    res.send('post registration key'); 
+  res.send('post registration key'); 
 });
 
 router.post('/register', function(req, res) {
-    winston.log('info', req.body);
-    var registration = req.body.regId;
-    if (!registration){
-        res.send({code:"401", msg:"no registration id sended"});
-    } else {
-
-        deviceRegister.insert(registration, function (error, newDoc) {
-           if (error) {
-               res.send({code:"402", msg:"erreur insertion base"})
-           } else {
-               res.send({code:"200"});
-           }
-        });
-    }
+  winston.log('info', req.body);
+  var registration = req.body.regId;
+  deviceRegister.register(registration, function (returnObj) {
+    res.send(returnObj);
+  });
 });
 
 router.get('/test', function(req, res) {
@@ -65,17 +52,19 @@ router.get('/test', function(req, res) {
 			msg: 'test message from api'
 		}
 	});
-
-	var registrationIds = [];
-	dbRegId.find({}, function (err, docs) {
-		docs.forEach(function(doc, index, array) {
-			registrationIds.push(doc.regId);
-		});
-	});
-	gcmSender.send(gcmMsg, registrationIds, function (err, result) {
-		if(err) console.error(err);
-		else    winston.log('info', result);
-	});
+  deviceRegister.findRegistered(function(registrationIds) {
+    gcmSender.send(gcmMsg, registrationIds, function (err, result) {
+      if(err) {
+        winston.log('error', err);
+        deviceRegister.handleError(registrationIds, err);
+        res.send({code:"401", msg: err});
+      }
+      else {
+        winston.log('info', result);
+        res.send({code:"200"});
+      }
+    });
+  });
 });
 
 router.get('/betaseries', function(req, res) {
@@ -241,4 +230,4 @@ router.get('/dl', function(req, res) {
 app.use('/api', router);
 
 app.listen(port);
-winston.log('info', 'see localhost port :'+port);
+winston.log('info', 'see localhost port :'+port, {cloud:true});
