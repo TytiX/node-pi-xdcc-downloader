@@ -15,6 +15,7 @@ var nconf = require('./lib/conf');
 var deviceRegister = require('./lib/register-service');
 var winston = require('./lib/logger');
 
+var task = require('./lib/cron-task');
 
 var gcmSender = new gcm.Sender(nconf.get('gcm-key'));
 
