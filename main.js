@@ -16,6 +16,7 @@ var winston = require('./lib/logger');
 
 var deviceRegister = require('./lib/register-service');
 var episodeService = require('./lib/episodes-service');
+var infexious = require('./lib/xdcc-downloader/infexious-xdcc');
 //var task = require('./lib/cron-task');
 
 var gcmSender = new gcm.Sender(nconf.get('gcm-key'));
@@ -84,28 +85,21 @@ if (nconf.get('test-page')) {
     winston.log('info', 'requestParam :'+show);
     winston.log('info', 'requestParam :'+code);
 
-    var url = 'http://inf.sirc.li/index.php?bot=ALL&t=iNFEXiOUS';
-
-    request( url, function(error, response, body) {
-      if (!error && response.statusCode == 200) {
-        var sb = [];
-
-        winston.log('info', 'page response');
-        var $ = cheerio.load(body);
-        winston.log('info', 'cheerio loaded');
-
-        var flashs = $('tr > td').filter( function (i, el) {
-          var chaine = $(el).find('b > a').text();
-          var epCode = $(el).find('b').text()
-          return chaine.toLowerCase().indexOf(show.toLowerCase()) > -1 && 
-                   epCode.toLowerCase().indexOf(code.toLowerCase()) > -1;
-        }).parent();
-
-        var xdccCode = $(flashs).find('td').first().text();
-        var xdccCommand = $(flashs).find('td').last().text();
-        var bot = xdccCommand.toString().substring('/msg '.length).split(' ');
-        res.send('nbResonse :'+flashs.length+'<br/>code :'+xdccCode+'<br/>bot :'+bot[0]+'<br/>command :'+xdccCommand+'<br/>bot :'+bot[0]);
-      }
+    infexious.episodesCommands([
+        {
+          title: "Archer",
+          code: "S03E01"
+        },
+        {
+          title: "Arrow",
+          code: "S01E01"
+        },
+        {
+          title: "Breaking",
+          code: "S01E01"
+        }
+      ], function(commands) {
+      res.send(commands);
     });
   });
 
