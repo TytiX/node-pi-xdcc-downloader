@@ -1,7 +1,11 @@
 {
-  "gcm-key": "GCM API KEY",
-  "bs-user": "betaseries user",
-  "bs-password": "betaseries password",
-  "bs-key": "betaseries API KEY",
-  "download-path": "./download"
+	"gcm-key": "GCM API KEY",
+	"bs-user": "betaseries user",
+	"bs-password": {
+		"pass": "betaseries password",
+		"encrypt": "false"
+	},
+	"bs-key": "betaseries API KEY",
+	"download-path": "./download",
+	"test-page": "true"
 }
