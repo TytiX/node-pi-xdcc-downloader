@@ -16,7 +16,7 @@ var winston = require('./lib/logger');
 
 var deviceRegister = require('./lib/register-service');
 var episodeService = require('./lib/episodes-service');
-var infexious = require('./lib/xdcc-downloader/infexious-xdcc');
+var Infexious = require('./lib/xdcc-downloader/infexious-xdcc');
 //var task = require('./lib/cron-task');
 
 var gcmSender = new gcm.Sender(nconf.get('gcm-key'));
@@ -84,7 +84,7 @@ if (nconf.get('test-page')) {
     var code = req.query.code;
     winston.log('info', 'requestParam :'+show);
     winston.log('info', 'requestParam :'+code);
-
+    var infexious = new Infexious();
     infexious.episodesCommands([
         {
           title: "Archer",
@@ -180,9 +180,65 @@ if (nconf.get('test-page')) {
     });
 
   });
+
+  router.get('/chaine-test', function(req, res) {
+    episodeService.updateFromBetaSeries(function() {
+      episodeService.episodesToDownload(function(episodes) {
+        var infexious = new Infexious();
+        infexious.episodesCommands(episodes, function(commands){
+          var objects = [];
+          episodes.forEach(function(episode, index, array) {
+            objects.push({
+              episode : episode,
+              command : commands[index]
+            });
+          });
+          res.send(objects);
+        });
+      });
+    });
+  });
+
 }
 // apply the routes to our application
 app.use('/api', router);
 
-app.listen(port);
-winston.log('info', 'see localhost port :'+port, {cloud:true});
+//app.listen(port);
+winston.log('info', 'application started on:'+port, {cloud:true});
+
+// test connection IRC
+
+var tmpEpisode = [
+  { 
+    id: 452518,
+    title: 'Archer (2009)',
+    code: 'S06E08',
+    saison: 6,
+    episode: 8,
+    _id: 'Ye9Zay0mHf5QbWnL' 
+  },
+  { 
+    id: 654654,
+    title: 'Futurama',
+    code: 'S07E01',
+    saison: 7,
+    episode: 1 
+  }
+];
+
+var infexious = new Infexious();
+infexious.episodesCommands(tmpEpisode, function(commands) {
+
+    winston.log('info', 'commands :'+util.inspect(commands));
+
+    infexious.downloadEpisodes(tmpEpisode, 
+      commands, 
+      function(downloaded) {
+
+        winston.log('info', downloaded);
+        winston.log('info', 'fin des telechargements');
+        infexious.end();
+      }
+    );
+
+  });
