@@ -87,16 +87,22 @@ if (nconf.get('test-page')) {
     var infexious = new Infexious();
     infexious.episodesCommands([
         {
-          title: "Archer",
-          code: "S03E01"
+          title: "Archer (2009)",
+          code: "S03E01",
+          saison: 3,
+          episode: 1,
         },
         {
           title: "Arrow",
-          code: "S01E01"
+          code: "S01E01",
+          saison: 1,
+          episode: 1,
         },
         {
-          title: "Breaking",
-          code: "S01E01"
+          title: "Breaking Bad",
+          code: "S01E01",
+          saison: 1,
+          episode: 1,
         }
       ], function(commands) {
       res.send(commands);
@@ -130,57 +136,6 @@ if (nconf.get('test-page')) {
     });
   });
 
-  router.get('/dl', function(req, res) {
-    var bot = req.query.bot;
-    var command = '#'+req.query.cmd;
-    winston.log('info', 'bot :'+bot);
-    winston.log('info', 'command :'+command);
-    winston.log('info', 'path :'+nconf.get('download-path'));
-    var user = 'desu' + Math.random().toString(36).substr(7, 3);
-
-    winston.log('info', 'Connecting...');
-    //irc.recycled-irc.net/6667
-    //#infexious
-    var client = new irc.Client('irc.recycled-irc.net', user, {
-      channels: [ '#infexious' ],
-      userName: user,
-      realName: user
-    });
-
-    //iNFEXiOUS`Archer xdcc get 64
-    client.on('join', function(channel, nick, message) {
-      if (nick !== user) return;
-      winston.log('info', 'Joined', channel);
-      client.getXdcc(bot, 'xdcc send ' + command, nconf.get('download-path'));
-    });
-
-    client.on('xdcc-connect', function(meta) {
-      winston.log('info', 'Connected: ' + meta.ip + ':' + meta.port);
-      winston.log('info', 'All meta: ' + util.inspect(meta, false, null));
-    });
-
-    var last = 0;
-    client.on('xdcc-data', function(received) {
-      last = received;
-    });
-
-    client.on('xdcc-end', function(received) {
-      winston.log('info', 'Download completed');
-      res.send('bot :'+bot+'<br/>cmd :'+command);
-    });
-
-    client.on('notice', function(from, to, message) {
-      if (to == user && from == bot) {
-        winston.log('info', "[notice]", message);
-      }
-    });
-
-    client.on('error', function(message) {
-      console.error(message);
-    });
-
-  });
-
   router.get('/chaine-test', function(req, res) {
     episodeService.updateFromBetaSeries(function() {
       episodeService.episodesToDownload(function(episodes) {
@@ -207,38 +162,44 @@ app.use('/api', router);
 winston.log('info', 'application started on:'+port, {cloud:true});
 
 // test connection IRC
+// var tmpEpisode = [
+//   { 
+//     id: 452518,
+//     title: 'Archer (2009)',
+//     code: 'S06E08',
+//     saison: 6,
+//     episode: 8,
+//     _id: 'Ye9Zay0mHf5QbWnL' 
+//   },
+//   { 
+//     id: 654654,
+//     title: 'Futurama',
+//     code: 'S07E01',
+//     saison: 7,
+//     episode: 1 
+//   }
+// ];
 
-var tmpEpisode = [
-  { 
-    id: 452518,
-    title: 'Archer (2009)',
-    code: 'S06E08',
-    saison: 6,
-    episode: 8,
-    _id: 'Ye9Zay0mHf5QbWnL' 
-  },
-  { 
-    id: 654654,
-    title: 'Futurama',
-    code: 'S07E01',
-    saison: 7,
-    episode: 1 
-  }
-];
+// var infexious = new Infexious();
+// infexious.episodesCommands(tmpEpisode, function(commands) {
 
-var infexious = new Infexious();
-infexious.episodesCommands(tmpEpisode, function(commands) {
+//     winston.log('info', 'commands :'+util.inspect(commands));
 
-    winston.log('info', 'commands :'+util.inspect(commands));
+//     infexious.downloadEpisodes(tmpEpisode, 
+//       commands, 
+//       function(downloaded) {
 
-    infexious.downloadEpisodes(tmpEpisode, 
-      commands, 
-      function(downloaded) {
+//         winston.log('info', downloaded);
+//         winston.log('info', 'fin des telechargements');
+//         infexious.end();
+//       }
+//     );
 
-        winston.log('info', downloaded);
-        winston.log('info', 'fin des telechargements');
-        infexious.end();
-      }
-    );
+//   });
 
-  });
+// test mise a jour et recuperation series
+episodeService.updateFromBetaSeries(function() {
+      episodeService.episodesToDownload(function(episodes) {
+        winston.log('info', episodes.length);
+      });
+    });
