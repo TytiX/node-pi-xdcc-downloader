@@ -64,12 +64,12 @@ if (nconf.get('test-page')) {
 // apply the routes to our application
 app.use('/api', router);
 
-// app.listen(port);
+app.listen(port);
 winston.log('info', 'application started on:'+port, {cloud:true});
 
 // appDownloader.testDownload();
 
-appDownloader.testEpisodesSuptitle();
+// appDownloader.testEpisodesSuptitle();
 
 // appDownloader.testBetaSeriesUpdate([
 //     5010, // Arrow
